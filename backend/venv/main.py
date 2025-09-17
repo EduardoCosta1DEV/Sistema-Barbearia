@@ -1,11 +1,23 @@
-# main.py
+# backend/main.py
 from fastapi import FastAPI
+from beanie import init_beanie
+from motor.motor_asyncio import AsyncIOMotorClient
 
-# Cria a instância da aplicação FastAPI
+# Importe os modelos
+from models.usuario import Usuario
+# Importe as rotas
+from routes.usuario_routes import router as usuario_router
+
 app = FastAPI()
 
-# Define um "endpoint" na raiz do site ("/")
-# Quando alguém acessar a URL principal, a função abaixo será executada
+@app.on_event("startup")
+async def start_database():
+    client = AsyncIOMotorClient("mongodb://localhost:27017")
+    await init_beanie(database=client.barbeariaDB, document_models=[Usuario])
+
+# Inclui as rotas de usuário no app principal, com um prefixo
+app.include_router(usuario_router, prefix="/api/usuarios", tags=["Usuarios"])
+
 @app.get("/")
 def ler_raiz():
     return {"mensagem": "Bem-vindo à API da Barbearia!"}
